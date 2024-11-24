@@ -2,7 +2,7 @@ import { encodeHex } from "jsr:@std/encoding/hex";
 
 import { database } from "./model.ts";
 
-const SESSION_LENGTH = 16
+const SESSION_LENGTH = 16;
 const textEncoder = new TextEncoder();
 
 async function hashPassword(password: string): Promise<string> {
@@ -14,8 +14,9 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 function generateSession(length: number): string {
-  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
+  const charset =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
 
   const randomValues = crypto.getRandomValues(new Uint8Array(length));
 
@@ -27,7 +28,7 @@ function generateSession(length: number): string {
 }
 
 type AuthenticationResult =
-  | { type: "success", session: string }
+  | { type: "success"; session: string }
   | { type: "login_failure" };
 
 export async function AuthenticateUser(
@@ -41,9 +42,9 @@ export async function AuthenticateUser(
   }
 
   if (account_password === await hashPassword(password)) {
-    const session = generateSession(SESSION_LENGTH)
-    database[username].session = session
-    
+    const session = generateSession(SESSION_LENGTH);
+    database[username].session = session;
+
     return { type: "success", session: session };
   } else {
     return { type: "login_failure" };
@@ -56,15 +57,15 @@ type SignupResult =
 
 export async function SignupUser(
   username: string,
-  password: string
+  password: string,
 ): Promise<SignupResult> {
   if (database?.[username] === undefined) {
-    database[username] = { 
+    database[username] = {
       password_hash: await hashPassword(password),
       session: undefined,
-    }
-    return { type: "success" }
+    };
+    return { type: "success" };
   }
 
-  return { type: "username_taken" }
+  return { type: "username_taken" };
 }
