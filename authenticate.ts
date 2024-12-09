@@ -35,7 +35,11 @@ export async function AuthenticateUser(
   username: string,
   password: string,
 ): Promise<AuthenticationResult> {
-  const account_password: string = database?.[username]?.password_hash;
+  const account_password = database.prepare(
+    `SELECT password_hash FROM users WHERE username='?'`
+  ).get(username);
+
+  console.log(account_password)
 
   if (account_password === undefined) {
     return { type: "login_failure" };
@@ -43,7 +47,9 @@ export async function AuthenticateUser(
 
   if (account_password === await hashPassword(password)) {
     const session = generateSession(SESSION_LENGTH);
-    database[username].session = session;
+    database.prepare(
+      `UPDATE users SET session = '?' WHERE username = '?'`
+    ).run(session, username);
 
     return { type: "success", session: session };
   } else {
@@ -59,11 +65,16 @@ export async function SignupUser(
   username: string,
   password: string,
 ): Promise<SignupResult> {
-  if (database?.[username] === undefined) {
-    database[username] = {
-      password_hash: await hashPassword(password),
-      session: undefined,
-    };
+  const userExist: boolean = Boolean(database.prepare(
+    `SELECT * FROM users WHERE username='?'`
+  ).run(username))
+
+  if (userExist === false) {
+    database.prepare(
+      `
+        INSERT INTO users (username, password_hash, session) VALUES (?, ?, ?);
+      `,
+    ).run(username, await hashPassword(password), null);
     return { type: "success" };
   }
 
